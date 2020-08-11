@@ -11,9 +11,6 @@ from time import sleep
 from datetime import datetime
 from Crypto import Random
 from Crypto.Cipher import AES
-
-
-
 import requests
 
 def get_token_user(clientid,username,password):
@@ -27,9 +24,7 @@ def get_token_user(clientid,username,password):
         'username': USER_NAME,
         'password': PASSWORD
     }
-
     resp = requests.post(URL, data=PAYLOAD)
-    
     TOKEN = resp.json()["access_token"]
     return resp.json()
 
@@ -41,7 +36,6 @@ def do_token_refresh(clientid,refresh_token):
         'client_id': CLIENT_ID,
         'refresh_token':refresh_token
     }
-
     resp = requests.post(URL, data=PAYLOAD)
     
     TOKEN = resp.json()["access_token"]
@@ -62,7 +56,7 @@ def get_pilot_profile(api_key,token_id):
         else:
             print('Response HTTP Status Code: {status_code}'.format(status_code=response.status_code))
             print('Response HTTP Response Body: {content}'.format(content=response.content))
-            
+            return {"Error":response.content}
     except requests.exceptions.RequestException:
         return -1
             
@@ -104,7 +98,7 @@ def get_model_id(api_key,manufacturer_name,model_name):
         else:
             print('Response HTTP Status Code: {status_code}'.format(status_code=response.status_code))
             print('Response HTTP Response Body: {content}'.format(content=response.content))
-
+            return {"Error":response.content}
     except requests.exceptions.RequestException:
         return -1
 
@@ -128,7 +122,7 @@ def create_flight_plan(api_key,token,data):
         else:
             print('Response HTTP Status Code: {status_code}'.format(status_code=response.status_code))
             print('Response HTTP Response Body: {content}'.format(content=response.content))
-            
+            return {"Error":response.content}
     except requests.exceptions.RequestException:
         return -1
 
@@ -164,6 +158,7 @@ def get_pilot_aircrafts(api_key,required):
         else:
             print('Response HTTP Status Code: {status_code}'.format(status_code=response.status_code))
             print('Response HTTP Response Body: {content}'.format(content=response.content))
+            return {"Error":response.content}
     except requests.exceptions.RequestException:
         return -1
 
@@ -186,7 +181,7 @@ def submit_flight_plan(api_key,token,planID):
         else:
             print('Response HTTP Status Code: {status_code}'.format(status_code=response.status_code))
             print('Response HTTP Response Body: {content}'.format(content=response.content))
-    
+            return {"Error":response.content}
     except requests.exceptions.RequestException:
         return -1
 
@@ -208,6 +203,7 @@ def get_flights(api_key,token,query):
         else:
             print('Response HTTP Status Code: {status_code}'.format(status_code=response.status_code))
             print('Response HTTP Response Body: {content}'.format(content=response.content))
+            return {"Error":response.content}
     except requests.exceptions.RequestException:
         return -1
 
@@ -228,7 +224,7 @@ def get_fligh_brief(api_key,token,plan_id):
         else:
             print('Response HTTP Status Code: {status_code}'.format(status_code=response.status_code))
             print('Response HTTP Response Body: {content}'.format(content=response.content))
-            return -1
+            return {"Error":response.content}
     except requests.exceptions.RequestException:
         return -1
 
@@ -251,7 +247,7 @@ def start_comm(api_key, token, flightID):
         else:
             print('Response HTTP Status Code: {status_code}'.format(status_code=response.status_code))
             print('Response HTTP Response Body: {content}'.format(content=response.content))
-            return -1
+            return {"Error":response.content}
     except requests.exceptions.RequestException:
         return -1
 
@@ -271,7 +267,7 @@ def end_comm(api_key, token, flightID):
         else:
             print('Response HTTP Status Code: {status_code}'.format(status_code=response.status_code))
             print('Response HTTP Response Body: {content}'.format(content=response.content))
-            return -1
+            return {"Error":response.content}
     except requests.exceptions.RequestException:
         return -1
 
@@ -291,6 +287,6 @@ def end_flight(api_key, token, flightID):
         else:
             print('Response HTTP Status Code: {status_code}'.format(status_code=response.status_code))
             print('Response HTTP Response Body: {content}'.format(content=response.content))
-            return -1
+            return {"Error":response.content}
     except requests.exceptions.RequestException:
         return -1
