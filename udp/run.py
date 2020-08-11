@@ -1,14 +1,34 @@
 import flask
 import methods 
 import json
-from flask import request, jsonify
 import sqlite3
+import socket
+import struct
+from Crypto.Cipher import AES
+from flask import request, jsonify
 
 
 app = flask.Flask(__name__)
 app.config["DEBUG"] = True
 
+
+position    = methods.telemetry_pb2.Position()
+attitude    = methods.telemetry_pb2.Attitude()
+speed       = methods.telemetry_pb2.Speed()
+barometer   = methods.telemetry_pb2.Barometer()
+
+HOSTNAME = 'telemetry.airmap.com'
+IPADDR = socket.gethostbyname(HOSTNAME)
+PORTNUM = 16060
+
 # Create some test data for our catalog in the form of a list of dictionaries.
+def pad(data, BS):
+    PS = (BS - len(data)) % BS
+    if PS == 0:
+        PS = BS
+    P = (chr(PS) * PS).encode()
+    return data + P
+
 
 
 @app.route('/home', methods=['GET'])
@@ -222,6 +242,66 @@ def start_comm():
     else:
         return "Use POST method"
 
+@app.route('/airmap/send_data',methods=['POST'])
+def send_data():
+    if request.method == "POST":
+        data = None 
+        try:
+            data = json.loads(request.data)
+        except json.decoder.JSONDecodeError:
+            return "Empty"
+        if len(data.keys())>0:
+            timestamp = data["timestamp"]
+            position.timestamp = timestamp
+            position.latitude = data["latitude"]
+            position.longitude = data["longitude"]
+            position.altitude_agl           = data["altitude_agl"]
+            position.altitude_msl           = data["altitude_msl"]
+            position.horizontal_accuracy    = data["horizontal_accuracy"]
+
+            attitude.timestamp              = timestamp
+            attitude.yaw                    = data["yaw"]
+            attitude.pitch                  = data["pitch"]
+            attitude.roll                   = data["roll"]
+
+            speed.timestamp                 = timestamp
+            speed.velocity_x                = data["vel_x"]
+            speed.velocity_y                = data["vel_y"]
+            speed.velocity_z                = data["vel_z"]
+
+            barometer.timestamp             = timestamp
+            barometer.pressure              = data["pressure"]
+            counter                         = data["counter"]
+            flight_id                       = data["flight_id"]
+            secretKey = data["secret_key"]
+
+            bytestring = position.SerializeToString()
+            format = '!HH'+str(len(bytestring))+'s'
+            payload = struct.pack(format, 1, len(bytestring), bytestring)
+
+            bytestring = attitude.SerializeToString()
+            format = '!HH'+str(len(bytestring))+'s'
+            payload += struct.pack(format, 2, len(bytestring), bytestring)
+
+            bytestring = speed.SerializeToString()
+            format = '!HH'+str(len(bytestring))+'s'
+            payload += struct.pack(format, 3, len(bytestring), bytestring)
+
+            bytestring = barometer.SerializeToString()
+            format = '!HH'+str(len(bytestring))+'s'
+            payload += struct.pack(format, 4, len(bytestring), bytestring)
+            
+            payload = pad(payload, 16)
+            IV = methods.Random.new().read(16)
+            aes = methods.AES.new(secretKey, AES.MODE_CBC, IV)
+            encryptedPayload = aes.encrypt(payload)
+            
+            format = '!LB'+str(len(flight_id))+'sB16s'+str(len(encryptedPayload))+'s'
+            PACKETDATA = struct.pack(format, counter, len(flight_id), flight_id.encode(), 1, IV, encryptedPayload)
+            s.send(PACKETDATA)
+            return "Packet Sent successfully"
+    else:
+        return "Use POST method"
 
 @app.route('/airmap/end_comm',methods=['POST'])
 def end_comm():
