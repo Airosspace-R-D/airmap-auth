@@ -115,7 +115,7 @@ def create_flight_plan(api_key,token,data):
             data=json.dumps(data)
         )
         if(response.status_code == 200):
-            print("Success")
+            # print("Success")
             response = json.loads(response.text)
             print(response)
             return response
@@ -198,7 +198,7 @@ def get_flights(api_key,token,query):
 
         response = requests.request("GET",url,headers=header,params=query)
         if response.status_code == 200:
-            print("Success")
+            
             return json.loads(response.text)
         else:
             print('Response HTTP Status Code: {status_code}'.format(status_code=response.status_code))
